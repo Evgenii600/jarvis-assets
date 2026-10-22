@@ -1,0 +1,32 @@
+# Скачивает модель Vosk (русская, маленькая) и библиотеку vosk-browser и кладёт их в репозиторий.
+# Джарвис берёт их отсюда для «слуха без интернета» (слово «Джарвис» ловится прямо на устройстве).
+name: Модель Vosk для Джарвиса
+on:
+  push:
+    paths: [".github/workflows/vosk.yml"]
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Скачать и упаковать
+        run: |
+          set -e
+          curl -fsSL --retry 3 -o m.zip https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
+          unzip -q m.zip
+          tar czf vosk-model-small-ru.tar.gz vosk-model-small-ru-0.22
+          rm -rf m.zip vosk-model-small-ru-0.22
+          curl -fsSL --retry 3 -o vosk.js https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js
+          touch .nojekyll
+          ls -la
+      - name: Сохранить в репозиторий
+        run: |
+          git config user.name "jarvis-assets-bot"
+          git config user.email "jarvis-assets-bot@users.noreply.github.com"
+          git add vosk-model-small-ru.tar.gz vosk.js .nojekyll
+          git diff --cached --quiet && exit 0
+          git commit -m "Модель Vosk (small-ru-0.22) и библиотека vosk-browser 0.0.8 для слуха без интернета"
+          git push
